@@ -71,6 +71,9 @@ class KubernetesContainerFactory(
                                name: String,
                                actionImage: ImageName,
                                userProvidedImage: Boolean,
+                               kind: String,
+                               cudamemory: Int,
+                               cudacore: Int,
                                memory: ByteSize,
                                cpuShares: Int)(implicit config: WhiskConfig, logging: Logging): Future[Container] = {
     val image = actionImage.resolveImageName(Some(
@@ -81,6 +84,9 @@ class KubernetesContainerFactory(
       name,
       image,
       userProvidedImage,
+      kind,
+      cudamemory,
+      cudacore,
       memory,
       environment = Map("__OW_API_HOST" -> config.wskApiHost) ++ containerArgsConfig.extraEnvVarMap,
       labels = Map("invoker" -> label, "release" -> KubernetesContainerFactoryProvider.release))

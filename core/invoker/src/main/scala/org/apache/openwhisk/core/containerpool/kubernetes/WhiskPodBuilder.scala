@@ -19,19 +19,9 @@ package org.apache.openwhisk.core.containerpool.kubernetes
 
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets.UTF_8
-
 import io.fabric8.kubernetes.api.builder.Predicate
 import io.fabric8.kubernetes.api.model.policy.{PodDisruptionBudget, PodDisruptionBudgetBuilder}
-import io.fabric8.kubernetes.api.model.{
-  ContainerBuilder,
-  EnvVarBuilder,
-  EnvVarSourceBuilder,
-  IntOrString,
-  LabelSelectorBuilder,
-  Pod,
-  PodBuilder,
-  Quantity
-}
+import io.fabric8.kubernetes.api.model.{ContainerBuilder, EnvVarBuilder, EnvVarSourceBuilder, IntOrString, LabelSelectorBuilder, Pod, PodBuilder, Quantity}
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient
 import org.apache.openwhisk.common.TransactionId
 import org.apache.openwhisk.core.entity.ByteSize
@@ -51,7 +41,10 @@ class WhiskPodBuilder(client: NamespacedKubernetesClient, config: KubernetesClie
     memory: ByteSize,
     environment: Map[String, String],
     labels: Map[String, String],
-    config: KubernetesClientConfig)(implicit transid: TransactionId): (Pod, Option[PodDisruptionBudget]) = {
+    config: KubernetesClientConfig,
+    cudamemory: Int,
+    cudacore: Int,
+    gpu: Int)(implicit transid: TransactionId): (Pod, Option[PodDisruptionBudget]) = {
     val envVars = environment.map {
       case (key, value) => new EnvVarBuilder().withName(key).withValue(value).build()
     }.toSeq ++ config.fieldRefEnvironment
@@ -111,16 +104,30 @@ class WhiskPodBuilder(client: NamespacedKubernetesClient, config: KubernetesClie
       .map(diskConfig => Map("ephemeral-storage" -> new Quantity(diskConfig.limit.toMB + "Mi")))
       .getOrElse(Map.empty)
 
+    val gpuLimits: Map[String, Quantity] = if (gpu == 1){
+            Map("tencent.com/vcuda-memory" -> new Quantity("" + cudamemory), "tencent.com/vcuda-core" -> new Quantity("" + cudacore))
+          }else{
+          Map.empty
+    }
+      val containerLimits = if (gpu == 1){
+        (Map("memory" -> new Quantity(memory.toMB + "Mi")) ++ cpu ++ diskLimit ++ gpuLimits).asJava
+      }
+      else {
+        (Map("memory" -> new Quantity(memory.toMB + "Mi")) ++ cpu ++ diskLimit).asJava
+      }
     //In container its assumed that env, port, resource limits are set explicitly
     //Here if any value exist in template then that would be overridden
     containerBuilder
       .withNewResources()
       //explicitly set requests and limits to same values
-      .withLimits((Map("memory" -> new Quantity(memory.toMB + "Mi")) ++ cpu ++ diskLimit).asJava)
-      .withRequests((Map("memory" -> new Quantity(memory.toMB + "Mi")) ++ cpu ++ diskLimit).asJava)
+//      .withLimits((Map("memory" -> new Quantity(memory.toMB + "Mi")) ++ cpu ++ diskLimit).asJava)
+//      .withRequests((Map("memory" -> new Quantity(memory.toMB + "Mi")) ++ cpu ++ diskLimit).asJava)
+      .withLimits(containerLimits)
+      .withRequests(containerLimits)
       .endResources()
       .withName(actionContainerName)
       .withImage(image)
+      .withImagePullPolicy("IfNotPresent")
       .withEnv(envVars.asJava)
       .addNewPort()
       .withContainerPort(8080)

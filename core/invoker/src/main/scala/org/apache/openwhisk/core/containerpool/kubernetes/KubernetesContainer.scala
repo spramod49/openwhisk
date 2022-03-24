@@ -58,6 +58,9 @@ object KubernetesContainer {
              name: String,
              image: String,
              userProvidedImage: Boolean = false,
+             kind: String,
+             cudamemory: Int,
+             cudacore: Int,
              memory: ByteSize = 256.MB,
              environment: Map[String, String] = Map.empty,
              labels: Map[String, String] = Map.empty)(implicit kubernetes: KubernetesApi,
@@ -70,7 +73,7 @@ object KubernetesContainer {
     val podName = if (origName.endsWith("-")) origName.reverse.dropWhile(_ == '-').reverse else origName
 
     for {
-      container <- kubernetes.run(podName, image, memory, environment, labels).recoverWith {
+      container <- kubernetes.run(podName, image, kind, cudamemory, cudacore, memory, environment, labels).recoverWith {
         case e: KubernetesPodApiException =>
           //apiserver call failed - this will expose a different error to users
           cleanupFailedPod(e, podName, WhiskContainerStartupError(Messages.resourceProvisionError))

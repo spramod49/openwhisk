@@ -50,7 +50,10 @@ protected[entity] abstract class Limits {
 protected[core] case class ActionLimits(timeout: TimeLimit = TimeLimit(),
                                         memory: MemoryLimit = MemoryLimit(),
                                         logs: LogLimit = LogLimit(),
-                                        concurrency: ConcurrencyLimit = ConcurrencyLimit())
+                                        concurrency: ConcurrencyLimit = ConcurrencyLimit(),
+                                        cudamemory: CudaMemoryLimit = CudaMemoryLimit(),
+                                        cudacore: CudaCoreLimit = CudaCoreLimit()
+                                        )
     extends Limits {
   override protected[entity] def toJson = ActionLimits.serdes.write(this)
 }
@@ -65,7 +68,7 @@ protected[core] case class TriggerLimits protected[core] () extends Limits {
 protected[core] object ActionLimits extends ArgNormalizer[ActionLimits] with DefaultJsonProtocol {
 
   override protected[core] implicit val serdes = new RootJsonFormat[ActionLimits] {
-    val helper = jsonFormat4(ActionLimits.apply)
+    val helper = jsonFormat6(ActionLimits.apply)
 
     def read(value: JsValue) = {
       val obj = Try {
@@ -76,8 +79,9 @@ protected[core] object ActionLimits extends ArgNormalizer[ActionLimits] with Def
       val memory = MemoryLimit.serdes.read(obj.get("memory") getOrElse deserializationError("'memory' is missing"))
       val logs = obj.get("logs") map { LogLimit.serdes.read(_) } getOrElse LogLimit()
       val concurrency = obj.get("concurrency") map { ConcurrencyLimit.serdes.read(_) } getOrElse ConcurrencyLimit()
-
-      ActionLimits(time, memory, logs, concurrency)
+      val cudamemory = obj.get("cudamemory") map { CudaMemoryLimit.serdes.read(_) } getOrElse CudaMemoryLimit()
+      val cudacore = obj.get("cudacore") map { CudaCoreLimit.serdes.read(_) } getOrElse CudaCoreLimit()
+      ActionLimits(time, memory, logs, concurrency, cudamemory, cudacore)
     }
 
     def write(a: ActionLimits) = helper.write(a)

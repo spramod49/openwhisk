@@ -61,6 +61,9 @@ class DockerContainerFactory(instance: InvokerInstanceId,
                                name: String,
                                actionImage: ExecManifest.ImageName,
                                userProvidedImage: Boolean,
+                               kind: String,
+                               cudamemory: Int,
+                               cudacore: Int,
                                memory: ByteSize,
                                cpuShares: Int)(implicit config: WhiskConfig, logging: Logging): Future[Container] = {
     val registryConfig =
@@ -115,7 +118,7 @@ class DockerContainerFactory(instance: InvokerInstanceId,
     val cleaning =
       docker.ps(filters = Seq("name" -> s"${ContainerFactory.containerNamePrefix(instance)}_"), all = true).flatMap {
         containers =>
-          logging.info(this, s"removing ${containers.size} action containers.")
+          logging.info(this, s"Pramod modified: removing ${containers.size} action containers.")
           val removals = containers.map { id =>
             (if (dockerContainerFactoryConfig.useRunc) {
                runc.resume(id)

@@ -1802,6 +1802,18 @@
           "format": "int32",
           "description": "number of concurrent activations allowed",
           "default": 1
+        },
+        "cudamemory" : {
+          "type": "integer",
+          "format": "int32",
+          "description": "amount of gpu memory required",
+          "default": 4
+        },
+        "cudacore" : {
+          "type": "integer",
+          "format": "int32",
+          "description": "percentage of gpu cores required",
+          "default": 20
         }
       }
     },

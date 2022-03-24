@@ -122,6 +122,9 @@ class YARNContainerFactory(actorSystem: ActorSystem,
     unusedname: String,
     actionImage: ExecManifest.ImageName,
     unuseduserProvidedImage: Boolean,
+    kind: String,
+    cudamemory: Int,
+    cudacore: Int,
     unusedmemory: ByteSize,
     unusedcpuShares: Int)(implicit config: WhiskConfig, logging: Logging): Future[Container] = {
     implicit val timeout: Timeout = Timeout(containerStartTimeoutMS.milliseconds)

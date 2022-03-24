@@ -136,14 +136,29 @@ class KubernetesClient(
 
   def run(name: String,
           image: String,
+          kind: String,
+          cudamemory: Int,
+          cudacore: Int,
           memory: ByteSize = 256.MB,
           environment: Map[String, String] = Map.empty,
           labels: Map[String, String] = Map.empty)(implicit transid: TransactionId): Future[KubernetesContainer] = {
 
-    val (pod, pdb) = podBuilder.buildPodSpec(name, image, memory, environment, labels, config)
-    if (transid.meta.extraLogging) {
-      log.info(this, s"Pod spec being created\n${Serialization.asYaml(pod)}")
+    // for ((k,v) <- environment) log.info(this, s"key-uniq: ${k}, value: ${v}")
+    // for ((k,v) <- labels) log.info(this, s"labels-key-uniq: ${k}, value: ${v}")
+    log.info(this, s"Kind-uniq info: ${kind}")
+    log.info(this, s"cudamemory-uniq info: ${cudamemory}")
+    log.info(this, s"cudacore-uniq info: ${cudacore}")
+
+    val (pod, pdb)  = if(kind.contains("@gpu")){
+      podBuilder.buildPodSpec(name, image, memory, environment, labels, config, cudamemory, cudacore, 1)
     }
+    else {
+      podBuilder.buildPodSpec(name, image, memory, environment, labels, config, cudamemory, cudacore, 0)
+    }
+
+    // if (transid.meta.extraLogging) {
+      log.info(this, s"Pod spec being created\n${Serialization.asYaml(pod)}")
+    // }
     val namespace = kubeRestClient.getNamespace
     val start = transid.started(
       this,
@@ -373,6 +388,9 @@ trait KubernetesApi {
 
   def run(name: String,
           image: String,
+          kind: String,
+          cudamemory: Int,
+          cudacore: Int,
           memory: ByteSize,
           environment: Map[String, String] = Map.empty,
           labels: Map[String, String] = Map.empty)(implicit transid: TransactionId): Future[KubernetesContainer]

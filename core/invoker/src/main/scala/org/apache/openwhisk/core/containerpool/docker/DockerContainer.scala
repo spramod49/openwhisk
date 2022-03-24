@@ -43,7 +43,7 @@ import org.apache.openwhisk.http.Messages
 object DockerContainer {
 
   private val byteStringSentinel = ByteString(Container.ACTIVATION_LOG_SENTINEL)
-
+//private val byteStringSentinel = ByteString("PRMAOD_HERE_LETS_SEE_WHAT_HAPPENS")
   /**
    * Creates a container running on a docker daemon.
    *

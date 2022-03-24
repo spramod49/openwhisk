@@ -256,7 +256,25 @@
                     "attachmentType": "text/plain"
                 }
             }
+        ],
+
+        "cuda" : [
+            {
+                "kind" : "cuda:11@gpu",
+                "default" : true,
+                "image": {
+                    "prefix" : "openwhisk",
+                    "name" : "actionloop-demo-cuda-v11.6",
+                    "tag" : "latest"
+                },
+                "deprecated" : false,
+                "attached": {
+                    "attachmentName": "codefile",
+                    "attachmentType": "text/plain"
+                }
+            }
         ]
+
     },
     "blackboxes": [
         {

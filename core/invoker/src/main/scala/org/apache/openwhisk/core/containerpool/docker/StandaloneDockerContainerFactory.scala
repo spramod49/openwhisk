@@ -65,6 +65,9 @@ class StandaloneDockerContainerFactory(instance: InvokerInstanceId, parameters: 
                                name: String,
                                actionImage: ExecManifest.ImageName,
                                userProvidedImage: Boolean,
+                               kind: String,
+                               cudamemory: Int,
+                               cudacore: Int,
                                memory: ByteSize,
                                cpuShares: Int)(implicit config: WhiskConfig, logging: Logging): Future[Container] = {
 
@@ -84,7 +87,7 @@ class StandaloneDockerContainerFactory(instance: InvokerInstanceId, parameters: 
         }
       } else Future.successful(true)
 
-    pulled.flatMap(_ => super.createContainer(tid, name, actionImage, userProvidedImage, memory, cpuShares))
+    pulled.flatMap(_ => super.createContainer(tid, name, actionImage, userProvidedImage, kind, cudamemory, cudacore, memory, cpuShares))
   }
 
   override def init(): Unit = {
